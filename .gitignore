@@ -1,0 +1,54 @@
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+.aws/
+secrets/
+*.pem
+*.key
+*.p12
+*.pfx
+*.crt
+*.cer
+
+# Python environments and caches
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Logs and runtime files
+*.log
+*.pid
+instance/
+
+# Local databases and backups
+*.sqlite3
+*.db
+*.sql.gz
+*.dump
+*.bak
+backups/
+
+# Editor and operating system files
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Build output
+node_modules/
+dist/
+build/
+
+# Terraform state
+.terraform/
+*.tfstate
+*.tfstate.*

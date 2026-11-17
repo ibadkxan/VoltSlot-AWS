@@ -1,0 +1,1266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>VoltSlot — EV Charging Slot Booking</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+.brand-mark{width:24px;height:24px;vertical-align:middle;margin-right:5px}
+.auth-logo-text .brand-mark{width:30px;height:30px}
+/* ── RESET & TOKENS ─────────────────────────────── */
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#f5f3ee;
+  --surface:#ffffff;
+  --border:#e2ddd5;
+  --text:#1a1714;
+  --muted:#7a7369;
+  --accent:#2d6a4f;
+  --accent2:#52b788;
+  --accent3:#f4a261;
+  --danger:#e63946;
+  --confirmed:#2d6a4f;
+  --pending:#f4a261;
+  --cancelled:#e63946;
+  --completed:#52b788;
+  --card-shadow:0 1px 3px rgba(0,0,0,.08), 0 8px 24px rgba(0,0,0,.06);
+  --radius:12px;
+  --font-head:'Syne',sans-serif;
+  --font-body:'DM Sans',sans-serif;
+  --font-mono:'DM Mono',monospace;
+}
+html{scroll-behavior:smooth}
+body{font-family:var(--font-body);background:var(--bg);color:var(--text);min-height:100vh;font-size:15px}
+button{cursor:pointer;font-family:var(--font-body)}
+input,select,textarea{font-family:var(--font-body)}
+a{text-decoration:none;color:inherit}
+.page{display:none;min-height:100vh}
+.page.active{display:block}
+nav{position:sticky;top:0;z-index:100;background:rgba(245,243,238,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:0 2rem;display:flex;align-items:center;justify-content:space-between;height:64px;}
+.nav-logo{font-family:var(--font-head);font-size:1.4rem;font-weight:800;color:var(--accent);letter-spacing:-.02em;display:flex;align-items:center;gap:.4rem;}
+.nav-logo span{display:inline-block;background:var(--accent);color:#fff;border-radius:6px;padding:2px 8px;font-size:.75rem;font-weight:700;letter-spacing:.06em;}
+.nav-links{display:flex;align-items:center;gap:.25rem}
+.nav-btn{background:none;border:none;padding:.5rem 1rem;border-radius:8px;font-size:.9rem;color:var(--muted);font-weight:500;transition:all .2s;}
+.nav-btn:hover,.nav-btn.active{background:var(--accent);color:#fff}
+.nav-user{display:flex;align-items:center;gap:.75rem;background:var(--surface);border:1px solid var(--border);border-radius:40px;padding:.35rem .35rem .35rem .9rem;}
+.nav-user-name{font-size:.85rem;font-weight:500}
+.nav-avatar{width:34px;height:34px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--font-head);font-weight:700;font-size:.9rem;}
+.hero{padding:5rem 2rem 4rem;max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:3rem;align-items:center;}
+.hero-tag{display:inline-flex;align-items:center;gap:.5rem;background:#d8f3dc;color:var(--accent);border-radius:40px;padding:.35rem .9rem;font-size:.8rem;font-weight:600;letter-spacing:.04em;margin-bottom:1.2rem;}
+.hero-tag::before{content:'⚡';font-size:.9rem}
+h1.hero-title{font-family:var(--font-head);font-size:clamp(2.2rem,4vw,3.2rem);font-weight:800;line-height:1.1;letter-spacing:-.03em;margin-bottom:1.2rem;}
+h1.hero-title em{color:var(--accent);font-style:normal}
+.hero-sub{color:var(--muted);font-size:1.05rem;line-height:1.7;margin-bottom:2rem}
+.hero-btns{display:flex;gap:1rem;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;gap:.5rem;padding:.75rem 1.5rem;border-radius:10px;font-size:.9rem;font-weight:600;border:none;transition:all .2s;letter-spacing:.01em;}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover{background:#1b4332;transform:translateY(-1px);box-shadow:0 4px 16px rgba(45,106,79,.3)}
+.btn-outline{background:transparent;color:var(--text);border:1.5px solid var(--border)}
+.btn-outline:hover{border-color:var(--accent);color:var(--accent)}
+.btn-accent2{background:var(--accent2);color:#fff}
+.btn-accent2:hover{background:#40916c}
+.btn-danger{background:var(--danger);color:#fff}
+.btn-danger:hover{background:#c1121f}
+.btn-sm{padding:.5rem 1rem;font-size:.82rem}
+.btn-block{width:100%;justify-content:center}
+.hero-visual{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:1.8rem;box-shadow:var(--card-shadow);position:relative;overflow:hidden;}
+.hero-visual::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,#d8f3dc22 0%,#b7e4c722 100%);}
+.station-preview{position:relative;z-index:1}
+.sp-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.2rem}
+.sp-title{font-family:var(--font-head);font-weight:700;font-size:1rem}
+.sp-badge{background:#d8f3dc;color:var(--accent);border-radius:20px;padding:.2rem .7rem;font-size:.75rem;font-weight:600;}
+.slot-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:.6rem;margin-bottom:1.2rem}
+.slot{aspect-ratio:1;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.2rem;font-size:.7rem;font-weight:600;border:1.5px solid transparent;transition:all .3s;}
+.slot-available{background:#d8f3dc;color:var(--accent);border-color:#b7e4c7}
+.slot-booked{background:#fee2e2;color:var(--danger);border-color:#fecaca}
+.slot-charging{background:#fef3c7;color:#92400e;border-color:#fde68a;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.6}}
+.slot-icon{font-size:1.1rem}
+.sp-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.75rem}
+.sp-stat{background:var(--bg);border-radius:10px;padding:.75rem;text-align:center;}
+.sp-stat-val{font-family:var(--font-head);font-size:1.3rem;font-weight:800;color:var(--accent)}
+.sp-stat-lbl{font-size:.7rem;color:var(--muted);font-weight:500;margin-top:.1rem}
+.stats-bar{background:var(--accent);color:#fff;padding:1.5rem 2rem;display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;}
+.stat-item{text-align:center}
+.stat-num{font-family:var(--font-head);font-size:2rem;font-weight:800}
+.stat-lbl{font-size:.8rem;opacity:.7;margin-top:.1rem}
+.section{padding:3.5rem 2rem;max-width:1100px;margin:0 auto}
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:2rem;}
+.section-title{font-family:var(--font-head);font-size:1.5rem;font-weight:800;letter-spacing:-.02em}
+.section-sub{color:var(--muted);font-size:.9rem;margin-top:.25rem}
+.cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1.25rem}
+.station-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.4rem;box-shadow:var(--card-shadow);transition:all .25s;cursor:pointer;}
+.station-card:hover{transform:translateY(-3px);box-shadow:0 4px 20px rgba(0,0,0,.1);border-color:var(--accent2)}
+.sc-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.8rem}
+.sc-name{font-family:var(--font-head);font-size:1rem;font-weight:700}
+.sc-city{font-size:.8rem;color:var(--muted);margin-top:.2rem;display:flex;align-items:center;gap:.3rem}
+.sc-status{border-radius:20px;padding:.2rem .75rem;font-size:.72rem;font-weight:700;letter-spacing:.04em;}
+.status-active{background:#d8f3dc;color:var(--accent)}
+.status-inactive{background:#f1f1f1;color:#888}
+.status-maintenance{background:#fff3cd;color:#856404}
+.sc-meta{display:grid;grid-template-columns:1fr 1fr;gap:.6rem;margin-bottom:1rem}
+.sc-meta-item{background:var(--bg);border-radius:8px;padding:.6rem .8rem;}
+.sc-meta-val{font-family:var(--font-head);font-weight:700;font-size:.95rem;color:var(--text)}
+.sc-meta-lbl{font-size:.7rem;color:var(--muted);margin-top:.1rem}
+.booking-form{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.8rem;box-shadow:var(--card-shadow);}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.form-group{margin-bottom:1.2rem}
+.form-label{display:block;font-size:.82rem;font-weight:600;margin-bottom:.4rem;color:var(--text);letter-spacing:.01em;}
+.form-input,.form-select{width:100%;padding:.7rem .9rem;border:1.5px solid var(--border);border-radius:8px;font-size:.9rem;background:var(--surface);color:var(--text);transition:border-color .2s;outline:none;}
+.form-input:focus,.form-select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(45,106,79,.1)}
+.form-hint{font-size:.75rem;color:var(--muted);margin-top:.3rem}
+.table-wrap{overflow-x:auto;border-radius:var(--radius);border:1px solid var(--border)}
+table{width:100%;border-collapse:collapse;background:var(--surface)}
+th{background:var(--bg);padding:.85rem 1rem;text-align:left;font-size:.78rem;font-weight:700;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;border-bottom:1px solid var(--border);}
+td{padding:.85rem 1rem;font-size:.88rem;border-bottom:1px solid var(--border);}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#fafaf8}
+.badge{display:inline-block;border-radius:20px;padding:.2rem .75rem;font-size:.72rem;font-weight:700;letter-spacing:.03em;}
+.badge-confirmed{background:#d8f3dc;color:var(--confirmed)}
+.badge-pending{background:#fff3cd;color:#92400e}
+.badge-cancelled{background:#fee2e2;color:var(--cancelled)}
+.badge-completed{background:#e0f2fe;color:#0369a1}
+.badge-success{background:#d8f3dc;color:var(--confirmed)}
+.badge-failed{background:#fee2e2;color:var(--cancelled)}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:999;display:none;align-items:center;justify-content:center;padding:1rem;}
+.modal-overlay.open{display:flex}
+.modal{background:var(--surface);border-radius:16px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.2);animation:slideUp .25s ease;}
+@keyframes slideUp{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+.modal-header{padding:1.4rem 1.6rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.modal-title{font-family:var(--font-head);font-size:1.1rem;font-weight:700}
+.modal-close{background:var(--bg);border:none;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1rem;color:var(--muted);cursor:pointer;transition:all .2s;}
+.modal-close:hover{background:var(--danger);color:#fff}
+.modal-body{padding:1.6rem}
+.modal-footer{padding:1rem 1.6rem;border-top:1px solid var(--border);display:flex;gap:.75rem;justify-content:flex-end}
+.dash-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1.25rem;margin-bottom:2rem;}
+.dash-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.4rem;box-shadow:var(--card-shadow);}
+.dash-card-icon{width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;margin-bottom:.9rem;}
+.dc-green{background:#d8f3dc}.dc-blue{background:#e0f2fe}.dc-amber{background:#fef3c7}.dc-red{background:#fee2e2}
+.dash-card-num{font-family:var(--font-head);font-size:1.8rem;font-weight:800}
+.dash-card-lbl{font-size:.82rem;color:var(--muted);margin-top:.2rem}
+.auth-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:2rem;background:var(--bg);}
+.auth-card{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:2.5rem;width:100%;max-width:420px;box-shadow:var(--card-shadow);}
+.auth-logo{text-align:center;margin-bottom:2rem;}
+.auth-logo-text{font-family:var(--font-head);font-size:1.8rem;font-weight:800;color:var(--accent);}
+.auth-title{font-family:var(--font-head);font-size:1.4rem;font-weight:700;text-align:center;margin-bottom:.4rem;}
+.auth-sub{text-align:center;color:var(--muted);font-size:.88rem;margin-bottom:1.8rem}
+.auth-divider{display:flex;align-items:center;gap:.75rem;margin:1.2rem 0;color:var(--muted);font-size:.82rem;}
+.auth-divider::before,.auth-divider::after{content:'';flex:1;height:1px;background:var(--border)}
+.auth-switch{text-align:center;font-size:.85rem;color:var(--muted);margin-top:1.2rem}
+.auth-switch a{color:var(--accent);font-weight:600;cursor:pointer}
+.toast{position:fixed;bottom:2rem;right:2rem;z-index:9999;background:var(--text);color:#fff;border-radius:12px;padding:.85rem 1.2rem;font-size:.88rem;font-weight:500;box-shadow:0 8px 30px rgba(0,0,0,.2);display:flex;align-items:center;gap:.6rem;transform:translateY(100px);opacity:0;transition:all .3s;max-width:360px;}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.success{background:var(--accent)}
+.toast.error{background:var(--danger)}
+.toast.warning{background:#d97706}
+.wallet-card{background:linear-gradient(135deg,var(--accent) 0%,#1b4332 100%);color:#fff;border-radius:16px;padding:1.8rem;margin-bottom:1.5rem;}
+.wallet-label{font-size:.82rem;opacity:.7;margin-bottom:.4rem}
+.wallet-amount{font-family:var(--font-head);font-size:2.5rem;font-weight:800}
+.wallet-sub{font-size:.82rem;opacity:.6;margin-top:.3rem}
+.profile-header{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:2rem;margin-bottom:1.5rem;display:flex;align-items:center;gap:1.5rem;box-shadow:var(--card-shadow);}
+.profile-avatar{width:72px;height:72px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--font-head);font-size:1.8rem;font-weight:800;flex-shrink:0;}
+.profile-name{font-family:var(--font-head);font-size:1.4rem;font-weight:700}
+.profile-email{color:var(--muted);font-size:.88rem;margin-top:.2rem}
+.vehicle-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.25rem;display:flex;align-items:center;gap:1rem;box-shadow:var(--card-shadow);transition:all .2s;}
+.vehicle-card:hover{border-color:var(--accent2)}
+.vehicle-icon{width:52px;height:52px;border-radius:12px;background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:1.6rem;flex-shrink:0;}
+.vehicle-name{font-family:var(--font-head);font-weight:700}
+.vehicle-reg{font-family:var(--font-mono);font-size:.8rem;color:var(--muted);background:var(--bg);padding:.15rem .5rem;border-radius:4px;display:inline-block;margin-top:.2rem;}
+.vehicle-meta{display:flex;gap:.5rem;margin-top:.4rem;flex-wrap:wrap}
+.vehicle-tag{background:var(--bg);border-radius:6px;padding:.15rem .5rem;font-size:.72rem;color:var(--muted);font-weight:500;}
+.admin-sidebar{width:220px;background:var(--surface);border-right:1px solid var(--border);min-height:100vh;padding:1.5rem 1rem;flex-shrink:0;}
+.admin-layout{display:flex}
+.admin-content{flex:1;padding:2rem;max-width:calc(100% - 220px)}
+.sidebar-item{display:flex;align-items:center;gap:.75rem;padding:.65rem .9rem;border-radius:8px;cursor:pointer;font-size:.88rem;font-weight:500;color:var(--muted);transition:all .2s;margin-bottom:.2rem;}
+.sidebar-item:hover,.sidebar-item.active{background:var(--accent);color:#fff}
+.sidebar-icon{font-size:1rem}
+.empty{text-align:center;padding:4rem 2rem;color:var(--muted);}
+.empty-icon{font-size:3rem;margin-bottom:.75rem}
+.empty-title{font-family:var(--font-head);font-size:1.1rem;font-weight:700;color:var(--text);margin-bottom:.4rem}
+@media(max-width:768px){
+  .hero{grid-template-columns:1fr}.hero-visual{display:none}.stats-bar{grid-template-columns:repeat(2,1fr)}
+  .dash-grid{grid-template-columns:repeat(2,1fr)}.form-row{grid-template-columns:1fr}
+  .admin-layout{flex-direction:column}.admin-sidebar{width:100%;min-height:auto;border-right:none;border-bottom:1px solid var(--border)}
+  .admin-content{max-width:100%}nav{padding:0 1rem}.section{padding:2rem 1rem}
+}
+.flex{display:flex}.flex-col{flex-direction:column}.items-center{align-items:center}.justify-between{justify-content:space-between}
+.gap-1{gap:.5rem}.gap-2{gap:1rem}.mt-1{margin-top:.5rem}.mt-2{margin-top:1rem}
+.text-muted{color:var(--muted)}.text-sm{font-size:.82rem}.font-mono{font-family:var(--font-mono)}
+.divider{height:1px;background:var(--border);margin:1.2rem 0}
+.tag-green{background:#d8f3dc;color:var(--accent);border-radius:20px;padding:.15rem .65rem;font-size:.75rem;font-weight:600}
+.tag-amber{background:#fef3c7;color:#92400e;border-radius:20px;padding:.15rem .65rem;font-size:.75rem;font-weight:600}
+.loading{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<!-- PAGE: LANDING -->
+<div id="page-landing" class="page active">
+  <nav>
+    <div class="nav-logo"><img class="brand-mark" src="{{ asset_url('voltslot-mark.svg') }}" alt=""/> VoltSlot <span>BETA</span></div>
+    <div class="nav-links">
+      <button class="nav-btn" onclick="showPage('page-stations');loadStations()">Stations</button>
+      <button class="nav-btn" onclick="showPage('page-login')">Sign In</button>
+      <button class="btn btn-primary btn-sm" onclick="showPage('page-register')">Get Started</button>
+    </div>
+  </nav>
+  <div class="hero">
+    <div>
+      <div class="hero-tag">Available across Karnataka</div>
+      <h1 class="hero-title">Book Your EV<br/>Charging Slot <em>Instantly</em></h1>
+      <p class="hero-sub">Find nearby charging stations, check real-time slot availability, and book your session — all in under 60 seconds.</p>
+      <div class="hero-btns">
+        <button class="btn btn-primary" onclick="showPage('page-register')">⚡ Book a Slot Now</button>
+        <button class="btn btn-outline" onclick="showPage('page-stations');loadStations()">Browse Stations</button>
+      </div>
+    </div>
+    <div class="hero-visual">
+      <div class="station-preview">
+        <div class="sp-header">
+          <div><div class="sp-title">EV Hub — MG Road</div><div style="font-size:.78rem;color:var(--muted);margin-top:.2rem">📍 Bengaluru, Karnataka</div></div>
+          <div class="sp-badge">● Live</div>
+        </div>
+        <div class="slot-grid">
+          <div class="slot slot-available"><div class="slot-icon">⚡</div><div>S-01</div></div>
+          <div class="slot slot-charging"><div class="slot-icon">🔋</div><div>S-02</div></div>
+          <div class="slot slot-booked"><div class="slot-icon">🚫</div><div>S-03</div></div>
+          <div class="slot slot-available"><div class="slot-icon">⚡</div><div>S-04</div></div>
+          <div class="slot slot-booked"><div class="slot-icon">🚫</div><div>S-05</div></div>
+          <div class="slot slot-available"><div class="slot-icon">⚡</div><div>S-06</div></div>
+          <div class="slot slot-charging"><div class="slot-icon">🔋</div><div>S-07</div></div>
+          <div class="slot slot-available"><div class="slot-icon">⚡</div><div>S-08</div></div>
+        </div>
+        <div class="sp-stats">
+          <div class="sp-stat"><div class="sp-stat-val" id="lp-avail">—</div><div class="sp-stat-lbl">Slots Left</div></div>
+          <div class="sp-stat"><div class="sp-stat-val" id="lp-price">—</div><div class="sp-stat-lbl">Per kWh</div></div>
+          <div class="sp-stat"><div class="sp-stat-val">Fast</div><div class="sp-stat-lbl">Charger</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="stats-bar">
+    <div class="stat-item"><div class="stat-num" id="stat-stations">—</div><div class="stat-lbl">Charging Stations</div></div>
+    <div class="stat-item"><div class="stat-num" id="stat-slots">—</div><div class="stat-lbl">Total Slots</div></div>
+    <div class="stat-item"><div class="stat-num" id="stat-users">—</div><div class="stat-lbl">Registered Users</div></div>
+    <div class="stat-item"><div class="stat-num" id="stat-revenue">—</div><div class="stat-lbl">Revenue Generated</div></div>
+  </div>
+  <div class="section">
+    <div class="section-header">
+      <div><div class="section-title">Available Stations</div><div class="section-sub">Click any station to book a slot</div></div>
+      <button class="btn btn-outline btn-sm" onclick="showPage('page-stations');loadStations()">View All</button>
+    </div>
+    <div class="cards-grid" id="landing-stations"><div class="empty"><div class="empty-icon">⚡</div><div class="empty-title">Loading stations...</div></div></div>
+  </div>
+</div>
+
+<!-- PAGE: LOGIN -->
+<div id="page-login" class="page">
+  <div class="auth-wrap">
+    <div class="auth-card">
+      <div class="auth-logo"><div class="auth-logo-text"><img class="brand-mark" src="{{ asset_url('voltslot-mark.svg') }}" alt=""/> VoltSlot</div></div>
+      <div class="auth-title">Welcome back</div>
+      <div class="auth-sub">Sign in to manage your bookings</div>
+      <div id="login-tab-btns" style="display:flex;gap:.5rem;margin-bottom:1.5rem;background:var(--bg);border-radius:10px;padding:.3rem">
+        <button id="btn-user-login" class="btn btn-primary btn-sm" style="flex:1" onclick="switchLoginTab('user')">User</button>
+        <button id="btn-admin-login" class="btn btn-outline btn-sm" style="flex:1" onclick="switchLoginTab('admin')">Admin</button>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email Address</label>
+        <input class="form-input" type="email" id="login-email" placeholder="you@example.com"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input class="form-input" type="password" id="login-password" placeholder="••••••••"/>
+      </div>
+      <button class="btn btn-primary btn-block" onclick="handleLogin()">Sign In →</button>
+      <div class="auth-divider">or try demo</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem">
+        <button class="btn btn-outline btn-sm" onclick="demoLogin('user')">👤 Demo User</button>
+        <button class="btn btn-outline btn-sm" onclick="demoLogin('admin')">🔑 Demo Admin</button>
+      </div>
+      <div class="auth-switch">Don't have an account? <a onclick="showPage('page-register')">Sign up</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE: REGISTER -->
+<div id="page-register" class="page">
+  <div class="auth-wrap">
+    <div class="auth-card" style="max-width:480px">
+      <div class="auth-logo"><div class="auth-logo-text"><img class="brand-mark" src="{{ asset_url('voltslot-mark.svg') }}" alt=""/> VoltSlot</div></div>
+      <div class="auth-title">Create Account</div>
+      <div class="auth-sub">Join VoltSlot and start booking instantly</div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">First Name</label><input class="form-input" id="reg-fname" placeholder="Anish"/></div>
+        <div class="form-group"><label class="form-label">Last Name</label><input class="form-input" id="reg-lname" placeholder="Kumar"/></div>
+      </div>
+      <div class="form-group"><label class="form-label">Email Address</label><input class="form-input" type="email" id="reg-email" placeholder="you@example.com"/></div>
+      <div class="form-group"><label class="form-label">Phone Number</label><input class="form-input" id="reg-phone" placeholder="98765XXXXX"/></div>
+      <div class="form-group"><label class="form-label">Password</label><input class="form-input" type="password" id="reg-password" placeholder="Min 6 characters"/></div>
+      <button class="btn btn-primary btn-block" onclick="handleRegister()">Create Account →</button>
+      <div class="auth-switch">Already have an account? <a onclick="showPage('page-login')">Sign in</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE: STATIONS (Public) -->
+<div id="page-stations" class="page">
+  <nav>
+    <div class="nav-logo"><img class="brand-mark" src="{{ asset_url('voltslot-mark.svg') }}" alt=""/> VoltSlot <span>BETA</span></div>
+    <div class="nav-links">
+      <button class="nav-btn" onclick="showPage('page-landing')">Home</button>
+      <button class="nav-btn active">Stations</button>
+      <button class="btn btn-primary btn-sm" onclick="showPage('page-login')">Sign In</button>
+    </div>
+  </nav>
+  <div class="section">
+    <div class="section-header">
+      <div><div class="section-title">All Charging Stations</div><div class="section-sub">Browse and select a station to book your slot</div></div>
+      <div style="display:flex;gap:.75rem;align-items:center">
+        <select class="form-select" style="width:160px" id="city-filter" onchange="filterStations()">
+          <option value="">All Cities</option>
+        </select>
+      </div>
+    </div>
+    <div class="cards-grid" id="stations-list"></div>
+  </div>
+</div>
+
+<!-- PAGE: USER DASHBOARD -->
+<div id="page-user-dashboard" class="page">
+  <nav id="user-nav">
+    <div class="nav-logo"><img class="brand-mark" src="{{ asset_url('voltslot-mark.svg') }}" alt=""/> VoltSlot <span>BETA</span></div>
+    <div class="nav-links">
+      <button class="nav-btn active" id="nav-dash" onclick="userTab('dashboard')">Dashboard</button>
+      <button class="nav-btn" id="nav-book" onclick="userTab('book')">Book Slot</button>
+      <button class="nav-btn" id="nav-bookings" onclick="userTab('bookings')">My Bookings</button>
+      <button class="nav-btn" id="nav-vehicles" onclick="userTab('vehicles')">Vehicles</button>
+      <button class="nav-btn" id="nav-wallet" onclick="userTab('wallet')">Wallet</button>
+    </div>
+    <div class="nav-user">
+      <div class="nav-user-name" id="nav-user-name">—</div>
+      <div class="nav-avatar" id="nav-user-avatar">?</div>
+      <button class="btn btn-outline btn-sm" onclick="handleLogout()">Logout</button>
+    </div>
+  </nav>
+
+  <!-- Dashboard Tab -->
+  <div id="tab-dashboard" class="section">
+    <div class="section-header">
+      <div><div class="section-title" id="dash-welcome">Good morning!</div><div class="section-sub">Here's your charging overview</div></div>
+      <button class="btn btn-primary" onclick="userTab('book')">⚡ Book New Slot</button>
+    </div>
+    <div class="dash-grid">
+      <div class="dash-card"><div class="dash-card-icon dc-green">📅</div><div class="dash-card-num" id="dc-total">—</div><div class="dash-card-lbl">Total Bookings</div></div>
+      <div class="dash-card"><div class="dash-card-icon dc-blue">✅</div><div class="dash-card-num" id="dc-completed">—</div><div class="dash-card-lbl">Completed</div></div>
+      <div class="dash-card"><div class="dash-card-icon dc-amber">⏳</div><div class="dash-card-num" id="dc-pending">—</div><div class="dash-card-lbl">Pending</div></div>
+      <div class="dash-card"><div class="dash-card-icon dc-green">💰</div><div class="dash-card-num" id="dc-wallet">—</div><div class="dash-card-lbl">Wallet Balance</div></div>
+    </div>
+    <div class="section-title" style="margin-bottom:1rem">Recent Bookings</div>
+    <div class="table-wrap" id="dash-recent-bookings"></div>
+  </div>
+
+  <!-- Book Tab -->
+  <div id="tab-book" class="section" style="display:none">
+    <div class="section-header">
+      <div><div class="section-title">Book a Charging Slot</div><div class="section-sub">Select a station and pick your time</div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem">
+      <div>
+        <div class="section-title" style="font-size:1rem;margin-bottom:1rem">Select Station</div>
+        <div id="book-station-list" style="display:flex;flex-direction:column;gap:.75rem"></div>
+      </div>
+      <div>
+        <div class="booking-form">
+          <div class="section-title" style="font-size:1rem;margin-bottom:1.2rem">Booking Details</div>
+          <div class="form-group">
+            <label class="form-label">Station</label>
+            <select class="form-select" id="book-station"><option value="">Select a station...</option></select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Your Vehicle</label>
+            <select class="form-select" id="book-vehicle"><option value="">Select vehicle...</option></select>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label class="form-label">Date</label><input class="form-input" type="date" id="book-date"/></div>
+            <div class="form-group">
+              <label class="form-label">Charger Type</label>
+              <select class="form-select" id="book-charger"><option>Fast</option><option>Slow</option><option>Ultra-Fast</option></select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label class="form-label">Start Time</label><input class="form-input" type="time" id="book-start"/></div>
+            <div class="form-group"><label class="form-label">End Time</label><input class="form-input" type="time" id="book-end"/></div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Estimated Units (kWh)</label>
+            <input class="form-input" type="number" id="book-units" placeholder="e.g. 10" step="0.1" min="0.1" oninput="updateCostEstimate()"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Payment Method</label>
+            <select class="form-select" id="book-payment"><option>UPI</option><option>Card</option><option>Wallet</option><option>NetBanking</option></select>
+          </div>
+          <div id="booking-estimate" style="display:none;background:var(--bg);border-radius:10px;padding:1rem;margin-bottom:1rem">
+            <div style="font-size:.82rem;font-weight:600;margin-bottom:.5rem">Cost Estimate</div>
+            <div id="est-detail" style="font-size:.82rem;color:var(--muted)"></div>
+          </div>
+          <button class="btn btn-primary btn-block" onclick="submitBooking()">⚡ Confirm Booking</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bookings Tab -->
+  <div id="tab-bookings" class="section" style="display:none">
+    <div class="section-header">
+      <div><div class="section-title">My Bookings</div><div class="section-sub">All your charging sessions</div></div>
+      <select class="form-select" style="width:160px" id="booking-filter" onchange="renderUserBookings()">
+        <option value="">All Status</option><option>Pending</option><option>Confirmed</option><option>Completed</option><option>Cancelled</option>
+      </select>
+    </div>
+    <div class="table-wrap" id="user-bookings-table"></div>
+  </div>
+
+  <!-- Vehicles Tab -->
+  <div id="tab-vehicles" class="section" style="display:none">
+    <div class="section-header">
+      <div><div class="section-title">My Vehicles</div><div class="section-sub">Manage your registered EVs</div></div>
+      <button class="btn btn-primary btn-sm" onclick="openAddVehicle()">+ Add Vehicle</button>
+    </div>
+    <div class="cards-grid" id="vehicles-list"></div>
+  </div>
+
+  <!-- Wallet Tab -->
+  <div id="tab-wallet" class="section" style="display:none">
+    <div class="section-header"><div><div class="section-title">Wallet</div><div class="section-sub">Manage your VoltSlot balance</div></div></div>
+    <div class="wallet-card">
+      <div class="wallet-label">Available Balance</div>
+      <div class="wallet-amount" id="wallet-amount">₹—</div>
+      <div class="wallet-sub">VoltSlot Wallet</div>
+    </div>
+    <div style="display:flex;gap:1rem;margin-bottom:1.5rem">
+      <button class="btn btn-accent2" onclick="openTopup()">+ Add Money</button>
+    </div>
+    <div class="section-title" style="font-size:1rem;margin-bottom:1rem">Transaction History</div>
+    <div class="table-wrap" id="wallet-history"></div>
+  </div>
+</div>
+
+<!-- PAGE: ADMIN PANEL -->
+<div id="page-admin" class="page">
+  <nav>
+    <div class="nav-logo"><img class="brand-mark" src="{{ asset_url('voltslot-mark.svg') }}" alt=""/> VoltSlot <span>ADMIN</span></div>
+    <div class="nav-links">
+      <div class="nav-user">
+        <div class="nav-user-name" id="admin-nav-name">Admin</div>
+        <div class="nav-avatar" style="background:#7c3aed">A</div>
+        <button class="btn btn-outline btn-sm" onclick="handleLogout()">Logout</button>
+      </div>
+    </div>
+  </nav>
+  <div class="admin-layout">
+    <div class="admin-sidebar">
+      <div style="font-size:.72rem;font-weight:700;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-bottom:.75rem;padding:0 .5rem">Menu</div>
+      <div class="sidebar-item active" id="sb-overview" onclick="adminTab('overview')"><span class="sidebar-icon">📊</span> Overview</div>
+      <div class="sidebar-item" id="sb-bookings" onclick="adminTab('bookings')"><span class="sidebar-icon">📅</span> All Bookings</div>
+      <div class="sidebar-item" id="sb-stations" onclick="adminTab('stations')"><span class="sidebar-icon">⚡</span> Stations</div>
+      <div class="sidebar-item" id="sb-users" onclick="adminTab('users')"><span class="sidebar-icon">👥</span> Users</div>
+      <div class="sidebar-item" id="sb-vehicles" onclick="adminTab('vehicles')"><span class="sidebar-icon">🚗</span> Vehicles</div>
+    </div>
+    <div class="admin-content">
+      <div id="atab-overview">
+        <div class="section-title" style="margin-bottom:1.5rem">System Overview</div>
+        <div class="dash-grid">
+          <div class="dash-card"><div class="dash-card-icon dc-green">📅</div><div class="dash-card-num" id="adm-bookings">—</div><div class="dash-card-lbl">Total Bookings</div></div>
+          <div class="dash-card"><div class="dash-card-icon dc-blue">⚡</div><div class="dash-card-num" id="adm-stations">—</div><div class="dash-card-lbl">Active Stations</div></div>
+          <div class="dash-card"><div class="dash-card-icon dc-amber">👥</div><div class="dash-card-num" id="adm-users">—</div><div class="dash-card-lbl">Users</div></div>
+          <div class="dash-card"><div class="dash-card-icon dc-green">💰</div><div class="dash-card-num" id="adm-revenue">—</div><div class="dash-card-lbl">Revenue</div></div>
+        </div>
+        <div class="section-title" style="font-size:1rem;margin-bottom:1rem">Recent Activity</div>
+        <div class="table-wrap" id="admin-recent"></div>
+      </div>
+      <div id="atab-bookings" style="display:none">
+        <div class="section-header">
+          <div class="section-title">All Bookings</div>
+          <select class="form-select" style="width:160px" id="admin-booking-filter" onchange="renderAdminBookings()">
+            <option value="">All</option><option>Pending</option><option>Confirmed</option><option>Completed</option><option>Cancelled</option>
+          </select>
+        </div>
+        <div class="table-wrap" id="admin-bookings-table"></div>
+      </div>
+      <div id="atab-stations" style="display:none">
+        <div class="section-header">
+          <div class="section-title">Charging Stations</div>
+          <button class="btn btn-primary btn-sm" onclick="openAddStation()">+ Add Station</button>
+        </div>
+        <div class="cards-grid" id="admin-stations-list"></div>
+      </div>
+      <div id="atab-users" style="display:none">
+        <div class="section-title" style="margin-bottom:1.2rem">Registered Users</div>
+        <div class="table-wrap" id="admin-users-table"></div>
+      </div>
+      <div id="atab-vehicles" style="display:none">
+        <div class="section-title" style="margin-bottom:1.2rem">All Vehicles</div>
+        <div class="table-wrap" id="admin-vehicles-table"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODALS -->
+<!-- Add Vehicle -->
+<div class="modal-overlay" id="modal-vehicle">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">Add New Vehicle</div><button class="modal-close" onclick="closeModal('modal-vehicle')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Brand</label><input class="form-input" id="v-brand" placeholder="Tata"/></div>
+        <div class="form-group"><label class="form-label">Model</label><input class="form-input" id="v-model" placeholder="Nexon EV"/></div>
+      </div>
+      <div class="form-group"><label class="form-label">Registration Number</label><input class="form-input" id="v-reg" placeholder="KA01AB1234"/></div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">EV Type</label>
+          <select class="form-select" id="v-type"><option>2-Wheeler</option><option>4-Wheeler</option><option>Bus</option><option>Other</option></select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Plug Type</label>
+          <select class="form-select" id="v-plug"><option>CCS</option><option>CHAdeMO</option><option>Type-2</option><option>AC-Slow</option></select>
+        </div>
+      </div>
+      <div class="form-group"><label class="form-label">Battery Capacity (kWh)</label><input class="form-input" type="number" id="v-cap" placeholder="40.5" step="0.1"/></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline btn-sm" onclick="closeModal('modal-vehicle')">Cancel</button>
+      <button class="btn btn-primary btn-sm" onclick="addVehicle()">Add Vehicle</button>
+    </div>
+  </div>
+</div>
+
+<!-- Wallet Top-up -->
+<div class="modal-overlay" id="modal-topup">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">Add Money to Wallet</div><button class="modal-close" onclick="closeModal('modal-topup')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-group"><label class="form-label">Amount (₹)</label><input class="form-input" type="number" id="topup-amount" placeholder="500" min="10" max="50000"/></div>
+      <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+        <button class="btn btn-outline btn-sm" onclick="document.getElementById('topup-amount').value=100">₹100</button>
+        <button class="btn btn-outline btn-sm" onclick="document.getElementById('topup-amount').value=500">₹500</button>
+        <button class="btn btn-outline btn-sm" onclick="document.getElementById('topup-amount').value=1000">₹1000</button>
+        <button class="btn btn-outline btn-sm" onclick="document.getElementById('topup-amount').value=2000">₹2000</button>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline btn-sm" onclick="closeModal('modal-topup')">Cancel</button>
+      <button class="btn btn-accent2 btn-sm" onclick="doTopup()">Add Money</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Station (Admin) -->
+<div class="modal-overlay" id="modal-station">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">Add Charging Station</div><button class="modal-close" onclick="closeModal('modal-station')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-group"><label class="form-label">Station Name</label><input class="form-input" id="st-name" placeholder="EV Hub - Location"/></div>
+      <div class="form-group"><label class="form-label">Address</label><input class="form-input" id="st-address" placeholder="Full address"/></div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">City</label><input class="form-input" id="st-city" placeholder="Bengaluru"/></div>
+        <div class="form-group"><label class="form-label">State</label><input class="form-input" id="st-state" placeholder="Karnataka" value="Karnataka"/></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Pincode</label><input class="form-input" id="st-pin" placeholder="560001"/></div>
+        <div class="form-group"><label class="form-label">Total Slots</label><input class="form-input" type="number" id="st-slots" placeholder="5" min="1"/></div>
+      </div>
+      <div class="form-group"><label class="form-label">Price per kWh (₹)</label><input class="form-input" type="number" id="st-price" placeholder="12.50" step="0.5"/></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline btn-sm" onclick="closeModal('modal-station')">Cancel</button>
+      <button class="btn btn-primary btn-sm" onclick="addStation()">Add Station</button>
+    </div>
+  </div>
+</div>
+
+<!-- Admin Update Booking -->
+<div class="modal-overlay" id="modal-admin-booking">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">Update Booking</div><button class="modal-close" onclick="closeModal('modal-admin-booking')">✕</button></div>
+    <div class="modal-body" id="admin-booking-detail"></div>
+    <div class="modal-footer" id="admin-booking-actions"></div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast">✓ <span id="toast-msg"></span></div>
+
+<!-- ═══════════════════════════════════════════
+     JAVASCRIPT — Backend-connected Logic
+═══════════════════════════════════════════ -->
+<script>
+// ── APP STATE ─────────────────────────────────────────────────────────────────
+let SESSION = { user: null, isAdmin: false, stations: [], vehicles: [], bookings: [] };
+let loginMode = 'user'; // 'user' or 'admin'
+
+// ── API HELPER ────────────────────────────────────────────────────────────────
+async function api(method, url, body = null) {
+  const opts = {
+    method,
+    headers: { 'Content-Type': 'application/json' },
+  };
+  if (body) opts.body = JSON.stringify(body);
+  const res = await fetch(url, opts);
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Request failed');
+  return data;
+}
+
+// ── PAGE SYSTEM ───────────────────────────────────────────────────────────────
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+// ── AUTH ──────────────────────────────────────────────────────────────────────
+function switchLoginTab(mode) {
+  loginMode = mode;
+  document.getElementById('btn-user-login').className  = mode==='user'  ? 'btn btn-primary btn-sm' : 'btn btn-outline btn-sm';
+  document.getElementById('btn-admin-login').className = mode==='admin' ? 'btn btn-primary btn-sm' : 'btn btn-outline btn-sm';
+}
+
+function demoLogin(type) {
+  if (type === 'user') {
+    document.getElementById('login-email').value    = 'anish@gmail.com';
+    document.getElementById('login-password').value = 'Anish@123';
+    switchLoginTab('user');
+  } else {
+    document.getElementById('login-email').value    = 'admin@evcharge.in';
+    document.getElementById('login-password').value = 'Admin@123';
+    switchLoginTab('admin');
+  }
+}
+
+async function handleLogin() {
+  const email    = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+  if (!email || !password) { showToast('Fill in all fields', 'error'); return; }
+
+  const endpoint = loginMode === 'admin' ? '/api/admin/login' : '/api/login';
+  try {
+    const data = await api('POST', endpoint, { email, password });
+    if (loginMode === 'admin') {
+      SESSION.isAdmin = true;
+      SESSION.user = data;
+      document.getElementById('admin-nav-name').textContent = data.name;
+      showPage('page-admin');
+      loadAdminData();
+    } else {
+      SESSION.isAdmin = false;
+      SESSION.user = data;
+      updateUserNav(data.name);
+      showPage('page-user-dashboard');
+      loadUserDashboard();
+    }
+    showToast('Welcome, ' + data.name + '!', 'success');
+  } catch(e) { showToast(e.message, 'error'); }
+}
+
+async function handleRegister() {
+  const body = {
+    first_name: document.getElementById('reg-fname').value.trim(),
+    last_name:  document.getElementById('reg-lname').value.trim(),
+    email:      document.getElementById('reg-email').value.trim(),
+    phone:      document.getElementById('reg-phone').value.trim(),
+    password:   document.getElementById('reg-password').value,
+  };
+  if (!body.first_name || !body.last_name || !body.email || !body.phone || !body.password) {
+    showToast('All fields are required', 'error'); return;
+  }
+  try {
+    const data = await api('POST', '/api/register', body);
+    SESSION.user = data;
+    SESSION.isAdmin = false;
+    updateUserNav(data.name);
+    showPage('page-user-dashboard');
+    loadUserDashboard();
+    showToast('Account created! Welcome aboard.', 'success');
+  } catch(e) { showToast(e.message, 'error'); }
+}
+
+async function handleLogout() {
+  const endpoint = SESSION.isAdmin ? '/api/admin/logout' : '/api/logout';
+  await fetch(endpoint, { method: 'POST' });
+  SESSION = { user: null, isAdmin: false, stations: [], vehicles: [], bookings: [] };
+  showPage('page-landing');
+  loadLandingStations();
+}
+
+function updateUserNav(name) {
+  document.getElementById('nav-user-name').textContent = name.split(' ')[0];
+  document.getElementById('nav-user-avatar').textContent = name[0].toUpperCase();
+
+  const greet = (() => {
+    const h = new Date().getHours();
+    if (h < 12) return 'Good morning';
+    if (h < 17) return 'Good afternoon';
+    return 'Good evening';
+  })();
+  document.getElementById('dash-welcome').textContent = `${greet}, ${name.split(' ')[0]}!`;
+}
+
+// ── STATIONS ──────────────────────────────────────────────────────────────────
+let allStations = [];
+
+async function loadLandingStations() {
+  try {
+    allStations = await api('GET', '/api/stations');
+    // Update hero stats
+    const totalSlots = allStations.reduce((a, s) => a + s.total_slots, 0);
+    document.getElementById('stat-stations').textContent = allStations.length;
+    document.getElementById('stat-slots').textContent    = totalSlots;
+    if (allStations[0]) {
+      document.getElementById('lp-avail').textContent  = allStations[0].total_slots;
+      document.getElementById('lp-price').textContent  = '₹' + allStations[0].price_per_unit;
+    }
+    // Render landing cards (first 3)
+    const container = document.getElementById('landing-stations');
+    container.innerHTML = allStations.slice(0, 3).map(stationCard).join('');
+  } catch(e) { console.error(e); }
+}
+
+async function loadStations() {
+  try {
+    allStations = await api('GET', '/api/stations');
+    // Populate city filter
+    const cities = [...new Set(allStations.map(s => s.city))];
+    const cf = document.getElementById('city-filter');
+    cf.innerHTML = '<option value="">All Cities</option>' + cities.map(c => `<option>${c}</option>`).join('');
+    filterStations();
+  } catch(e) { showToast('Failed to load stations', 'error'); }
+}
+
+function filterStations() {
+  const city = document.getElementById('city-filter')?.value || '';
+  const list = city ? allStations.filter(s => s.city === city) : allStations;
+  document.getElementById('stations-list').innerHTML = list.map(stationCard).join('') ||
+    `<div class="empty"><div class="empty-icon">🔍</div><div class="empty-title">No stations found</div></div>`;
+}
+
+function stationCard(s) {
+  return `<div class="station-card" onclick="handleStationClick(${s.station_id})">
+    <div class="sc-top">
+      <div><div class="sc-name">${s.station_name}</div><div class="sc-city">📍 ${s.city}, ${s.state}</div></div>
+      <span class="sc-status status-${s.status}">${s.status}</span>
+    </div>
+    <div class="sc-meta">
+      <div class="sc-meta-item"><div class="sc-meta-val">${s.total_slots}</div><div class="sc-meta-lbl">Slots Available</div></div>
+      <div class="sc-meta-item"><div class="sc-meta-val">₹${s.price_per_unit}</div><div class="sc-meta-lbl">Per kWh</div></div>
+    </div>
+    <div style="font-size:.78rem;color:var(--muted)">📍 ${s.address}</div>
+  </div>`;
+}
+
+function handleStationClick(id) {
+  if (!SESSION.user) { showPage('page-login'); return; }
+  // Pre-select station in booking form
+  userTab('book');
+  showPage('page-user-dashboard');
+  setTimeout(() => {
+    const sel = document.getElementById('book-station');
+    if (sel) sel.value = id;
+  }, 300);
+}
+
+// ── USER DASHBOARD ────────────────────────────────────────────────────────────
+async function loadUserDashboard() {
+  try {
+    // Load data in parallel
+    const [profile, bookings, wallet, vehicles, stations] = await Promise.all([
+      api('GET', '/api/me'),
+      api('GET', '/api/bookings'),
+      api('GET', '/api/wallet'),
+      api('GET', '/api/vehicles'),
+      api('GET', '/api/stations'),
+    ]);
+
+    SESSION.bookings  = bookings;
+    SESSION.vehicles  = vehicles;
+    SESSION.stations  = stations;
+
+    // Dashboard stats
+    document.getElementById('dc-total').textContent     = bookings.length;
+    document.getElementById('dc-completed').textContent = bookings.filter(b => b.booking_status === 'Completed').length;
+    document.getElementById('dc-pending').textContent   = bookings.filter(b => b.booking_status === 'Pending').length;
+    document.getElementById('dc-wallet').textContent    = '₹' + wallet.balance.toFixed(2);
+
+    // Recent bookings (last 5)
+    document.getElementById('dash-recent-bookings').innerHTML = bookingsTable(bookings.slice(0, 5), true);
+
+    // Stat bars update
+    document.getElementById('stat-users').textContent = '—'; // only admin knows this
+
+    // Populate booking form
+    populateBookingForm(stations, vehicles);
+
+    // Wallet
+    document.getElementById('wallet-amount').textContent = '₹' + wallet.balance.toFixed(2);
+    renderWalletHistory(wallet.transactions);
+
+  } catch(e) { showToast('Failed to load data: ' + e.message, 'error'); }
+}
+
+function populateBookingForm(stations, vehicles) {
+  const stSel = document.getElementById('book-station');
+  stSel.innerHTML = '<option value="">Select a station...</option>' +
+    stations.map(s => `<option value="${s.station_id}">${s.station_name} — ${s.city} (${s.total_slots} slots)</option>`).join('');
+
+  const vSel = document.getElementById('book-vehicle');
+  vSel.innerHTML = '<option value="">Select vehicle...</option>' +
+    vehicles.map(v => `<option value="${v.vehicle_id}">${v.brand} ${v.model} (${v.reg_number})</option>`).join('');
+
+  // Set default date to today
+  document.getElementById('book-date').min = new Date().toISOString().split('T')[0];
+  document.getElementById('book-date').value = new Date().toISOString().split('T')[0];
+
+  // Render station list panel
+  document.getElementById('book-station-list').innerHTML = stations.map(s => `
+    <div class="station-card" style="cursor:pointer" onclick="document.getElementById('book-station').value=${s.station_id};updateCostEstimate()">
+      <div class="sc-top">
+        <div><div class="sc-name">${s.station_name}</div><div class="sc-city">📍 ${s.city}</div></div>
+        <span class="sc-status status-${s.status}">${s.status}</span>
+      </div>
+      <div class="sc-meta">
+        <div class="sc-meta-item"><div class="sc-meta-val">${s.total_slots}</div><div class="sc-meta-lbl">Slots</div></div>
+        <div class="sc-meta-item"><div class="sc-meta-val">₹${s.price_per_unit}</div><div class="sc-meta-lbl">Per kWh</div></div>
+      </div>
+    </div>`).join('');
+}
+
+function updateCostEstimate() {
+  const stId  = parseInt(document.getElementById('book-station')?.value);
+  const units = parseFloat(document.getElementById('book-units')?.value) || 0;
+  const st    = SESSION.stations.find(s => s.station_id === stId);
+  const el    = document.getElementById('booking-estimate');
+  if (st && units > 0) {
+    const cost = (st.price_per_unit * units).toFixed(2);
+    document.getElementById('est-detail').innerHTML =
+      `${units} kWh × ₹${st.price_per_unit}/kWh = <strong>₹${cost}</strong>`;
+    el.style.display = 'block';
+  } else {
+    el.style.display = 'none';
+  }
+}
+
+// ── USER TABS ─────────────────────────────────────────────────────────────────
+function userTab(tab) {
+  ['dashboard','book','bookings','vehicles','wallet'].forEach(t => {
+    document.getElementById('tab-' + t).style.display = t === tab ? 'block' : 'none';
+    const nb = document.getElementById('nav-' + (t === 'dashboard' ? 'dash' : t.replace('bookings','bookings')));
+    if (nb) nb.classList.toggle('active', t === tab);
+  });
+  // Map nav id
+  ['dash','book','bookings','vehicles','wallet'].forEach((id, i) => {
+    const el = document.getElementById('nav-' + id);
+    const tabs = ['dashboard','book','bookings','vehicles','wallet'];
+    if (el) el.classList.toggle('active', tabs[i] === tab);
+  });
+
+  if (tab === 'bookings')  renderUserBookings();
+  if (tab === 'vehicles')  renderVehicles();
+  if (tab === 'wallet')    loadWallet();
+}
+
+// ── BOOKINGS ──────────────────────────────────────────────────────────────────
+async function renderUserBookings() {
+  try {
+    const bookings = await api('GET', '/api/bookings');
+    SESSION.bookings = bookings;
+    const filter = document.getElementById('booking-filter')?.value || '';
+    const list   = filter ? bookings.filter(b => b.booking_status === filter) : bookings;
+    document.getElementById('user-bookings-table').innerHTML = bookingsTable(list, true);
+  } catch(e) { showToast('Failed to load bookings', 'error'); }
+}
+
+function bookingsTable(bookings, showCancel = false) {
+  if (!bookings.length) return `<div class="empty"><div class="empty-icon">📋</div><div class="empty-title">No bookings yet</div></div>`;
+  return `<table>
+    <thead><tr><th>ID</th><th>Station</th><th>Vehicle</th><th>Date</th><th>Time</th><th>Amount</th><th>Status</th>${showCancel ? '<th>Action</th>' : ''}</tr></thead>
+    <tbody>${bookings.map(b => `<tr>
+      <td class="font-mono">#${String(b.booking_id).padStart(3,'0')}</td>
+      <td>${b.station_name || '—'}<br/><span class="text-muted text-sm">${b.city || ''}</span></td>
+      <td class="font-mono text-sm">${b.reg_number || '—'}<br/><span class="text-muted">${b.brand} ${b.model}</span></td>
+      <td>${b.slot_date}</td>
+      <td class="font-mono text-sm">${fmtTime(b.start_time)}–${fmtTime(b.end_time)}</td>
+      <td>${b.amount > 0 ? '₹' + parseFloat(b.amount).toFixed(2) : '—'}</td>
+      <td>${bookingBadge(b.booking_status)}</td>
+      ${showCancel ? `<td>${['Pending','Confirmed'].includes(b.booking_status) ?
+        `<button class="btn btn-danger btn-sm" onclick="cancelBooking(${b.booking_id})">Cancel</button>` : '—'}</td>` : ''}
+    </tr>`).join('')}
+    </tbody></table>`;
+}
+
+async function cancelBooking(id) {
+  if (!confirm('Cancel this booking?')) return;
+  try {
+    await api('PUT', `/api/bookings/${id}/cancel`);
+    showToast('Booking cancelled', 'success');
+    renderUserBookings();
+    loadUserDashboard();
+  } catch(e) { showToast(e.message, 'error'); }
+}
+
+async function submitBooking() {
+  const body = {
+    station_id:     parseInt(document.getElementById('book-station').value),
+    vehicle_id:     parseInt(document.getElementById('book-vehicle').value),
+    slot_date:      document.getElementById('book-date').value,
+    start_time:     document.getElementById('book-start').value,
+    end_time:       document.getElementById('book-end').value,
+    charger_type:   document.getElementById('book-charger').value,
+    payment_method: document.getElementById('book-payment').value,
+  };
+  if (!body.station_id || !body.vehicle_id || !body.slot_date || !body.start_time || !body.end_time) {
+    showToast('Please fill all booking fields', 'error'); return;
+  }
+  if (body.start_time >= body.end_time) {
+    showToast('End time must be after start time', 'error'); return;
+  }
+  try {
+    const data = await api('POST', '/api/bookings', body);
+    showToast('Booking confirmed! ID: #' + data.booking_id, 'success');
+    userTab('bookings');
+    loadUserDashboard();
+  } catch(e) { showToast(e.message, 'error'); }
+}
+
+// ── VEHICLES ──────────────────────────────────────────────────────────────────
+async function renderVehicles() {
+  try {
+    const vehicles = await api('GET', '/api/vehicles');
+    SESSION.vehicles = vehicles;
+    const container = document.getElementById('vehicles-list');
+    if (!vehicles.length) {
+      container.innerHTML = `<div class="empty"><div class="empty-icon">🚗</div><div class="empty-title">No vehicles yet</div><div>Click 'Add Vehicle' to register your EV</div></div>`;
+      return;
+    }
+    const icons = {'2-Wheeler':'🛵','4-Wheeler':'🚗','Bus':'🚌','Other':'⚡'};
+    container.innerHTML = vehicles.map(v => `
+      <div class="vehicle-card">
+        <div class="vehicle-icon">${icons[v.ev_type] || '🚗'}</div>
+        <div style="flex:1">
+          <div class="vehicle-name">${v.brand} ${v.model}</div>
+          <div class="vehicle-reg">${v.reg_number}</div>
+          <div class="vehicle-meta">
+            <span class="vehicle-tag">${v.ev_type}</span>
+            <span class="vehicle-tag">${v.plug_type}</span>
+            <span class="vehicle-tag">${v.bat_cap_kwh} kWh</span>
+          </div>
+        </div>
+      </div>`).join('');
+  } catch(e) { showToast('Failed to load vehicles', 'error'); }
+}
+
+function openAddVehicle() { openModal('modal-vehicle'); }
+
+async function addVehicle() {
+  const body = {
+    brand:      document.getElementById('v-brand').value.trim(),
+    model:      document.getElementById('v-model').value.trim(),
+    reg_number: document.getElementById('v-reg').value.trim(),
+    ev_type:    document.getElementById('v-type').value,
+    plug_type:  document.getElementById('v-plug').value,
+    bat_cap_kwh:parseFloat(document.getElementById('v-cap').value) || 0,
+  };
+  if (!body.brand || !body.model || !body.reg_number || !body.bat_cap_kwh) {
+    showToast('Fill all vehicle fields', 'error'); return;
+  }
+  try {
+    await api('POST', '/api/vehicles', body);
+    closeModal('modal-vehicle');
+    showToast('Vehicle added!', 'success');
+    renderVehicles();
+    // Refresh booking form vehicle list
+    const vehicles = await api('GET', '/api/vehicles');
+    SESSION.vehicles = vehicles;
+    const vSel = document.getElementById('book-vehicle');
+    if (vSel) {
+      vSel.innerHTML = '<option value="">Select vehicle...</option>' +
+        vehicles.map(v => `<option value="${v.vehicle_id}">${v.brand} ${v.model} (${v.reg_number})</option>`).join('');
+    }
+  } catch(e) { showToast(e.message, 'error'); }
+}
+
+// ── WALLET ────────────────────────────────────────────────────────────────────
+async function loadWallet() {
+  try {
+    const data = await api('GET', '/api/wallet');
+    document.getElementById('wallet-amount').textContent = '₹' + data.balance.toFixed(2);
+    document.getElementById('dc-wallet').textContent     = '₹' + data.balance.toFixed(2);
+    renderWalletHistory(data.transactions);
+  } catch(e) { showToast('Failed to load wallet', 'error'); }
+}
+
+function renderWalletHistory(txns) {
+  const el = document.getElementById('wallet-history');
+  if (!txns.length) {
+    el.innerHTML = `<div class="empty"><div class="empty-icon">💳</div><div class="empty-title">No transactions yet</div></div>`;
+    return;
+  }
+  el.innerHTML = `<table>
+    <thead><tr><th>Date</th><th>Type</th><th>Amount</th><th>Description</th></tr></thead>
+    <tbody>${txns.map(t => `<tr>
+      <td>${t.txn_at.slice(0,16)}</td>
+      <td><span class="badge ${t.txn_type==='Credit'?'badge-confirmed':'badge-cancelled'}">${t.txn_type}</span></td>
+      <td class="font-mono">${t.txn_type==='Credit'?'+':'-'}₹${parseFloat(t.amount).toFixed(2)}</td>
+      <td>${t.description || '—'}</td>
+    </tr>`).join('')}
+    </tbody></table>`;
+}
+
+function openTopup() { openModal('modal-topup'); }
+
+async function doTopup() {
+  const amount = parseFloat(document.getElementById('topup-amount').value);
+  if (!amount || amount < 10) { showToast('Minimum top-up is ₹10', 'error'); return; }
+  try {
+    const data = await api('POST', '/api/wallet/topup', { amount });
+    closeModal('modal-topup');
+    showToast(data.message, 'success');
+    document.getElementById('wallet-amount').textContent = '₹' + data.new_balance.toFixed(2);
+    document.getElementById('dc-wallet').textContent     = '₹' + data.new_balance.toFixed(2);
+    loadWallet();
+  } catch(e) { showToast(e.message, 'error'); }
+}
+
+// ── ADMIN ─────────────────────────────────────────────────────────────────────
+async function loadAdminData() {
+  try {
+    const stats = await api('GET', '/api/admin/stats');
+    document.getElementById('adm-bookings').textContent = stats.total_bookings;
+    document.getElementById('adm-stations').textContent = stats.active_stations;
+    document.getElementById('adm-users').textContent    = stats.total_users;
+    document.getElementById('adm-revenue').textContent  = '₹' + stats.total_revenue.toFixed(0);
+    renderAdminOverview();
+  } catch(e) { showToast('Failed to load admin data', 'error'); }
+}
+
+async function renderAdminOverview() {
+  try {
+    const bookings = await api('GET', '/api/admin/bookings');
+    document.getElementById('admin-recent').innerHTML = adminBookingsTable(bookings.slice(0, 5));
+  } catch(e) {}
+}
+
+function adminTab(tab) {
+  ['overview','bookings','stations','users','vehicles'].forEach(t => {
+    document.getElementById('atab-' + t).style.display = t === tab ? 'block' : 'none';
+    const sb = document.getElementById('sb-' + t);
+    if (sb) sb.classList.toggle('active', t === tab);
+  });
+  if (tab === 'bookings') renderAdminBookings();
+  if (tab === 'stations') renderAdminStations();
+  if (tab === 'users')    renderAdminUsers();
+  if (tab === 'vehicles') renderAdminVehicles();
+}
+
+async function renderAdminBookings() {
+  try {
+    const filter   = document.getElementById('admin-booking-filter')?.value || '';
+    const url      = filter ? `/api/admin/bookings?status=${filter}` : '/api/admin/bookings';
+    const bookings = await api('GET', url);
+    document.getElementById('admin-bookings-table').innerHTML = adminBookingsTable(bookings);
+  } catch(e) { showToast('Failed to load bookings', 'error'); }
+}
+
+function adminBookingsTable(bookings) {
+  if (!bookings.length) return `<div class="empty"><div class="empty-icon">📋</div><div class="empty-title">No bookings</div></div>`;
+  return `<table>
+    <thead><tr><th>ID</th><th>User</th><th>Station</th><th>Vehicle</th><th>Date</th><th>Amount</th><th>Status</th><th>Action</th></tr></thead>
+    <tbody>${bookings.map(b => `<tr>
+      <td class="font-mono">#${String(b.booking_id).padStart(3,'0')}</td>
+      <td>${b.user_name || '—'}<br/><span class="text-muted text-sm">${b.user_email || ''}</span></td>
+      <td>${b.station_name || '—'}</td>
+      <td class="font-mono text-sm">${b.reg_number || '—'}</td>
+      <td>${b.slot_date}</td>
+      <td>${parseFloat(b.amount) > 0 ? '₹' + parseFloat(b.amount).toFixed(2) : '—'}</td>
+      <td>${bookingBadge(b.booking_status)}</td>
+      <td><button class="btn btn-outline btn-sm" onclick="adminViewBooking(${b.booking_id},'${b.booking_status}',${b.units_consumed})">Manage</button></td>
+    </tr>`).join('')}
+    </tbody></table>`;
+}
+
+let currentAdminBookingId = null;
+function adminViewBooking(id, status, units) {
+  currentAdminBookingId = id;
+  document.getElementById('admin-booking-detail').innerHTML = `
+    <div class="form-group"><label class="form-label">Current Status</label><div>${bookingBadge(status)}</div></div>
+    <div class="form-group"><label class="form-label">Units Consumed (kWh)</label>
+      <input class="form-input" type="number" id="admin-units" value="${units}" step="0.1" min="0"/>
+    </div>
+    <div class="form-group"><label class="form-label">Update Status</label>
+      <select class="form-select" id="admin-new-status">
+        <option value="">— Keep current —</option>
+        <option>Confirmed</option><option>Completed</option><option>Cancelled</option>
+      </select>
+    </div>
+    <p class="text-muted text-sm">⚡ Setting to "Completed" will auto-calculate bill via DB trigger.</p>`;
+  document.getElementById('admin-booking-actions').innerHTML = `
+    <button class="btn btn-outline btn-sm" onclick="closeModal('modal-admin-booking')">Close</button>
+    <button class="btn btn-primary btn-sm" onclick="adminUpdateBooking()">Update</button>`;
+  openModal('modal-admin-booking');
+}
+
+async function adminUpdateBooking() {
+  const newStatus = document.getElementById('admin-new-status').value;
+  const units     = parseFloat(document.getElementById('admin-units').value) || 0;
+  const body      = { units_consumed: units };
+  if (newStatus) body.booking_status = newStatus;
+  try {
+    await api('PUT', `/api/admin/bookings/${currentAdminBookingId}`, body);
+    closeModal('modal-admin-booking');
+    showToast('Booking updated!', 'success');
+    renderAdminBookings();
+    loadAdminData();
+  } catch(e) { showToast(e.message, 'error'); }
+}
+
+async function renderAdminStations() {
+  try {
+    const stations = await api('GET', '/api/stations/all');
+    document.getElementById('admin-stations-list').innerHTML = stations.map(s => `
+      <div class="station-card">
+        <div class="sc-top">
+          <div><div class="sc-name">${s.station_name}</div><div class="sc-city">📍 ${s.city}</div></div>
+          <span class="sc-status status-${s.status}">${s.status}</span>
+        </div>
+        <div class="sc-meta">
+          <div class="sc-meta-item"><div class="sc-meta-val">${s.total_slots}</div><div class="sc-meta-lbl">Slots</div></div>
+          <div class="sc-meta-item"><div class="sc-meta-val">₹${s.price_per_unit}</div><div class="sc-meta-lbl">Per kWh</div></div>
+        </div>
+        <div class="sc-meta">
+          <div class="sc-meta-item"><div class="sc-meta-val">${s.total_bookings}</div><div class="sc-meta-lbl">Bookings</div></div>
+          <div class="sc-meta-item"><div class="sc-meta-val">₹${parseFloat(s.total_revenue).toFixed(0)}</div><div class="sc-meta-lbl">Revenue</div></div>
+        </div>
+        <div style="display:flex;gap:.5rem">
+          <button class="btn btn-outline btn-sm" onclick="toggleStation(${s.station_id},'${s.status}')">
+            ${s.status==='active'?'Deactivate':'Activate'}
+          </button>
+        </div>
+      </div>`).join('');
+  } catch(e) { showToast('Failed to load stations', 'error'); }
+}
+
+async function toggleStation(id, currentStatus) {
+  const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
+  try {
+    await api('PUT', `/api/stations/${id}/status`, { status: newStatus });
+    showToast(`Station ${newStatus === 'active' ? 'activated' : 'deactivated'}`, 'success');
+    renderAdminStations();
+  } catch(e) { showToast(e.message, 'error'); }
+}
+
+function openAddStation() { openModal('modal-station'); }
+
+async function addStation() {
+  const body = {
+    station_name: document.getElementById('st-name').value.trim(),
+    address:      document.getElementById('st-address').value.trim(),
+    city:         document.getElementById('st-city').value.trim(),
+    state:        document.getElementById('st-state').value.trim(),
+    pincode:      document.getElementById('st-pin').value.trim(),
+    total_slots:  parseInt(document.getElementById('st-slots').value) || 0,
+    price_per_unit:parseFloat(document.getElementById('st-price').value) || 0,
+  };
+  if (!body.station_name || !body.city || !body.pincode || !body.total_slots || !body.price_per_unit) {
+    showToast('Fill all fields', 'error'); return;
+  }
+  try {
+    await api('POST', '/api/stations', body);
+    closeModal('modal-station');
+    showToast('Station added!', 'success');
+    renderAdminStations();
+  } catch(e) { showToast(e.message, 'error'); }
+}
+
+async function renderAdminUsers() {
+  try {
+    const users = await api('GET', '/api/admin/users');
+    document.getElementById('admin-users-table').innerHTML = `<table>
+      <thead><tr><th>ID</th><th>Name</th><th>Email</th><th>Phone</th><th>Wallet</th><th>Bookings</th></tr></thead>
+      <tbody>${users.map(u => `<tr>
+        <td class="font-mono">${u.user_id}</td>
+        <td>${u.first_name} ${u.last_name}</td>
+        <td>${u.email}</td>
+        <td class="font-mono">${u.phone}</td>
+        <td>₹${parseFloat(u.wallet_balance).toFixed(2)}</td>
+        <td>${u.total_bookings}</td>
+      </tr>`).join('')}</tbody></table>`;
+  } catch(e) { showToast('Failed to load users', 'error'); }
+}
+
+async function renderAdminVehicles() {
+  try {
+    const vehicles = await api('GET', '/api/admin/vehicles');
+    document.getElementById('admin-vehicles-table').innerHTML = `<table>
+      <thead><tr><th>ID</th><th>Reg Number</th><th>Brand</th><th>Model</th><th>Type</th><th>Owner</th><th>Plug</th></tr></thead>
+      <tbody>${vehicles.map(v => `<tr>
+        <td class="font-mono">${v.vehicle_id}</td>
+        <td class="font-mono">${v.reg_number}</td>
+        <td>${v.brand}</td><td>${v.model}</td>
+        <td>${v.ev_type}</td>
+        <td>${v.owner_name}</td>
+        <td>${v.plug_type}</td>
+      </tr>`).join('')}</tbody></table>`;
+  } catch(e) { showToast('Failed to load vehicles', 'error'); }
+}
+
+// ── MODAL ─────────────────────────────────────────────────────────────────────
+function openModal(id)  { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.modal-overlay').forEach(el => {
+  el.addEventListener('click', e => { if (e.target === el) el.classList.remove('open'); });
+});
+
+// ── HELPERS ───────────────────────────────────────────────────────────────────
+function bookingBadge(status) {
+  const map = { Confirmed:'confirmed', Pending:'pending', Cancelled:'cancelled', Completed:'completed' };
+  return `<span class="badge badge-${map[status]||'pending'}">${status}</span>`;
+}
+
+function fmtTime(t) {
+  if (!t) return '—';
+  return String(t).slice(0, 5);  // "HH:MM:SS" → "HH:MM"
+}
+
+// ── TOAST ─────────────────────────────────────────────────────────────────────
+let toastTimer;
+function showToast(msg, type = '') {
+  const t = document.getElementById('toast');
+  t.className = 'toast show' + (type ? ' ' + type : '');
+  t.querySelector('#toast-msg').textContent = msg;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+loadLandingStations();
+
+// Auto-restore session on refresh (check /api/me)
+(async () => {
+  try {
+    const user = await api('GET', '/api/me');
+    if (user) {
+      SESSION.user = user;
+      updateUserNav(user.first_name + ' ' + user.last_name);
+      showPage('page-user-dashboard');
+      loadUserDashboard();
+    }
+  } catch(e) {
+    // Not logged in, stay on landing
+  }
+})();
+</script>
+</body>
+</html>
